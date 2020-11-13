@@ -1,20 +1,19 @@
-<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>03 - 探索isa结构体 | 林一博客</title><meta name="keywords" content="Objective-C,类结构体"><meta name="author" content="luin4"><meta name="copyright" content="luin4"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="03 - 探索isa结构体[TOC]  一:　知识点扩展1:　 位域 定义:　位域是一个特殊类型的结构体, 它会把xxx个字节中的二进位划分几个不同的区域, 并标识每个区域的位数, 每个域有一个域名, 允许在程序中按域名进行操作, 这样就可以把不同的对象用一个字节的二进制位域来表示.   &#x2F;&#x2F; 位域 struct FixBitArea &amp;#123; &#x2F;&#x2F;   类型　域名   : 占据的位数">
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>03 - 探索isa结构体 | 林一博客</title><meta name="keywords" content="Objective-C,类结构体"><meta name="author" content="luin4"><meta name="copyright" content="luin4"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="学如逆水行舟, 不进则退. 探索iOS底层, 溺死在源码的海洋中.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="03 - 探索isa结构体">
 <meta property="og:url" content="https://luin4.github.io/.github.io/2020/10/13/03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93/index.html">
 <meta property="og:site_name" content="林一博客">
-<meta property="og:description" content="03 - 探索isa结构体[TOC]  一:　知识点扩展1:　 位域 定义:　位域是一个特殊类型的结构体, 它会把xxx个字节中的二进位划分几个不同的区域, 并标识每个区域的位数, 每个域有一个域名, 允许在程序中按域名进行操作, 这样就可以把不同的对象用一个字节的二进制位域来表示.   &#x2F;&#x2F; 位域 struct FixBitArea &amp;#123; &#x2F;&#x2F;   类型　域名   : 占据的位数">
+<meta property="og:description" content="学如逆水行舟, 不进则退. 探索iOS底层, 溺死在源码的海洋中.">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png">
+<meta property="og:image" content="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d9b3a41d696d441e8434383e980242f0~tplv-k3u1fbpfcp-watermark.image">
 <meta property="article:published_time" content="2020-10-13T02:00:09.000Z">
-<meta property="article:modified_time" content="2020-10-13T02:22:27.510Z">
+<meta property="article:modified_time" content="2020-11-13T09:50:24.059Z">
 <meta property="article:author" content="luin4">
 <meta property="article:tag" content="Objective-C">
 <meta property="article:tag" content="类结构体">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png"><link rel="shortcut icon" href="/.github.io/img/luin4-icon.png"><link rel="canonical" href="https://luin4.github.io/.github.io/2020/10/13/03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/.github.io/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css"><script>var GLOBAL_CONFIG = { 
+<meta name="twitter:image" content="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d9b3a41d696d441e8434383e980242f0~tplv-k3u1fbpfcp-watermark.image"><link rel="shortcut icon" href="/.github.io/img/luin4-icon.png"><link rel="canonical" href="https://luin4.github.io/.github.io/2020/10/13/03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/.github.io/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css"><script>var GLOBAL_CONFIG = { 
   root: '/.github.io/',
-  hexoversion: '5.2.0',
   algolia: undefined,
   localSearch: undefined,
   translate: undefined,
@@ -80,8 +79,8 @@ var saveToLocal = {
   isPost: true,
   isHome: false,
   isHighlightShrink: false,
-  isSidebar: true,
-  postUpdate: '2020-10-13 10:22:27'
+  isToc: true,
+  postUpdate: '2020-11-13 17:50:24'
 }</script><noscript><style type="text/css">
   #nav {
     opacity: 1
@@ -94,8 +93,7 @@ var saveToLocal = {
   #post-meta time {
     display: inline !important
   }
-</style></noscript><script>(function () {
-  window.activateDarkMode = function () {
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
     document.documentElement.setAttribute('data-theme', 'dark')
     if (document.querySelector('meta[name="theme-color"]') !== null) {
       document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
@@ -103,11 +101,10 @@ var saveToLocal = {
   }
   window.activateLightMode = function () {
     document.documentElement.setAttribute('data-theme', 'light')
-    if (document.querySelector('meta[name="theme-color"]') !== null) {
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
       document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
     }
   }
-
   const autoChangeMode = 'false'
   const t = saveToLocal.get('theme')
   if (autoChangeMode === '1') {
@@ -115,7 +112,6 @@ var saveToLocal = {
     const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
     const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
     const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
-
     if (t === undefined) {
       if (isLightMode) activateLightMode()
       else if (isDarkMode) activateDarkMode()
@@ -142,73 +138,83 @@ var saveToLocal = {
   } else {
     if (t === 'dark') activateDarkMode()
     else if (t === 'light') activateLightMode()
-  }
-})()</script><meta name="generator" content="Hexo 5.2.0"></head><body><div id="mobile-sidebar"><div id="menu_mask"></div><div id="mobile-sidebar-menus"><div class="mobile_author_icon"><img class="avatar-img" src="/.github.io/img/luin4-icon.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="mobile_post_data"><div class="mobile_data_item is-center"><div class="mobile_data_link"><a href="/.github.io/archives/"><div class="headline">文章</div><div class="length_num">3</div></a></div></div><div class="mobile_data_item is-center">      <div class="mobile_data_link"><a href="/.github.io/tags/"><div class="headline">标签</div><div class="length_num">4</div></a></div></div><div class="mobile_data_item is-center">     <div class="mobile_data_link"><a href="/.github.io/categories/"><div class="headline">分类</div><div class="length_num">3</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/.github.io/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div id="body-wrap"><div id="sidebar"><i class="fas fa-arrow-right on" id="toggle-sidebar"></i><div class="sidebar-toc"><div class="sidebar-toc__title">目录</div><div class="sidebar-toc__progress"><span class="progress-notice">你已经读了</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar">     </div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-number">1.</span> <span class="toc-text">03 - 探索isa结构体</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80-%E7%9F%A5%E8%AF%86%E7%82%B9%E6%89%A9%E5%B1%95"><span class="toc-number">1.1.</span> <span class="toc-text">一:　知识点扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BD%8D%E5%9F%9F"><span class="toc-number">1.1.1.</span> <span class="toc-text">1:　 位域</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C-%E7%9C%8B%E7%9C%8B%E4%BB%80%E4%B9%88%E6%98%AF%E5%AF%B9%E8%B1%A1-%E2%80%93-gt-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-number">1.2.</span> <span class="toc-text">二:　看看什么是对象 – &gt; 探索isa结构体</span></a></li></ol></li></ol></div></div></div><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/.github.io/">林一博客</a></span><span id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/.github.io/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><span class="close" id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></span></span></nav><div id="post-info"><div id="post-title"><div class="posttitle">03 - 探索isa结构体</div></div><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-10-13T02:00:09.000Z" title="发表于 2020-10-13 10:00:09">2020-10-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2020-10-13T02:22:27.510Z" title="更新于 2020-10-13 10:22:27">2020-10-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/.github.io/categories/OC%E5%BA%95%E5%B1%82%E6%8E%A2%E7%B4%A2/">OC底层探索</a></span></div><div class="meta-secondline"> </div></div></div></header><main class="layout_post" id="content-inner"><article id="post"><div class="post-content" id="article-container"><h1 id="03-探索isa结构体"><a href="#03-探索isa结构体" class="headerlink" title="03 - 探索isa结构体"></a>03 - 探索isa结构体</h1><p>[TOC]</p>
-<hr>
-<h2 id="一-知识点扩展"><a href="#一-知识点扩展" class="headerlink" title="一:　知识点扩展"></a>一:　知识点扩展</h2><h3 id="1-位域"><a href="#1-位域" class="headerlink" title="1:　 位域"></a>1:　 位域</h3><ul>
-<li><strong>定义</strong>:　位域是一个<code>特殊类型的结构体</code>, 它会把xxx个字节中的二进位划分几个不同的区域, 并标识<code>每个区域的位数</code>, 每个域有一个域名, 允许在程序中按域名进行操作, 这样就可以把不同的对象用一个字节的二进制位域来表示. </li>
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><link rel="stylesheet" href="/Github.css"><meta name="generator" content="Hexo 5.2.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/.github.io/img/luin4-icon.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/.github.io/archives/"><div class="headline">文章</div><div class="length-num">2</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/.github.io/tags/"><div class="headline">标签</div><div class="length-num">4</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/.github.io/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/.github.io/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d9b3a41d696d441e8434383e980242f0~tplv-k3u1fbpfcp-watermark.image)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/.github.io/">林一博客</a></span><span id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/.github.io/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><span class="close" id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></span></span></nav><div id="post-info"><h1 class="post-title">03 - 探索isa结构体</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-10-13T02:00:09.000Z" title="发表于 2020-10-13 10:00:09">2020-10-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2020-11-13T09:50:24.059Z" title="更新于 2020-11-13 17:50:24">2020-11-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/.github.io/categories/OC%E5%BA%95%E5%B1%82%E6%8E%A2%E7%B4%A2/">OC底层探索</a></span></div><div class="meta-secondline"> </div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="知识点扩展"><a class="header-anchor" href="#知识点扩展">¶</a>知识点扩展</h2>
+<h3 id="一-位域"><a class="header-anchor" href="#一-位域">¶</a>一:　 位域</h3>
+<ul>
+<li><strong>定义</strong>:　位域是一个==特殊类型的结构体==, 它会把xxx个字节中的二进位划分几个不同的区域, 并标识==每个区域的位数==, 每个域有一个域名, 允许在程序中按域名进行操作, 这样就可以把不同的对象用一个字节的二进制位域来表示.</li>
 </ul>
-<pre class="line-numbers language-objectivec" data-language="objectivec"><code class="language-objectivec"><span class="token comment">// 位域</span>
-<span class="token keyword">struct</span> FixBitArea <span class="token punctuation">&#123;</span>
-<span class="token comment">//   类型　域名   : 占据的位数</span>
-    <span class="token keyword">char</span> front  <span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">;</span>
-    <span class="token keyword">char</span> back   <span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">;</span>
-    <span class="token keyword">char</span> left   <span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">;</span>
-    <span class="token keyword">char</span> right  <span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">;</span>
-<span class="token punctuation">&#125;</span> fixBitArea<span class="token punctuation">;</span>
-<span class="token keyword">@end</span>
-``` 
-<span class="token operator">*</span><span class="token operator">*</span>图<span class="token number">1</span><span class="token punctuation">:</span> 联合体位域二进位展示<span class="token operator">*</span><span class="token operator">*</span>
- <span class="token operator">!</span><span class="token punctuation">[</span><span class="token operator">-</span>w489<span class="token punctuation">]</span><span class="token punctuation">(</span>https<span class="token punctuation">:</span><span class="token comment">//tva1.sinaimg.cn/large/007S8ZIlly1gj8o1ahwnsj30r608iwgg.jpg)</span>
-                        
-<span class="token operator">*</span> <span class="token operator">*</span><span class="token operator">*</span>优点<span class="token operator">*</span><span class="token operator">*</span><span class="token punctuation">:</span>　内存使用更加精细灵活<span class="token punctuation">,</span> 节省大量空间
-
-<span class="token operator">></span> 　　 因为我们在一些场景中<span class="token punctuation">,</span> 是不需要那么大的空间<span class="token punctuation">,</span> 比如说<span class="token number">4</span>个BOOL属性都分配<span class="token number">4</span>个字节<span class="token punctuation">,</span> 那最后会占据<span class="token number">128</span>位空间<span class="token punctuation">(</span><span class="token number">1</span>字节<span class="token operator">=</span><span class="token number">8</span>位<span class="token punctuation">)</span>，但实际上，我们只需要１位就可以了<span class="token punctuation">.</span> 运用<span class="token keyword">union</span>就可以很好的分配内存空间<span class="token punctuation">.</span>
-
-<span class="token operator">*</span> <span class="token operator">*</span><span class="token operator">*</span>缺点<span class="token operator">*</span><span class="token operator">*</span><span class="token punctuation">:</span>　各个变量直接是互斥的<span class="token punctuation">.</span> 包容性会比较差<span class="token punctuation">.</span>
-
-
-### <span class="token number">2</span><span class="token punctuation">:</span>　<span class="token keyword">union</span><span class="token punctuation">:</span> 联合体
-<span class="token operator">*</span> <span class="token operator">*</span><span class="token operator">*</span>定义<span class="token operator">*</span><span class="token operator">*</span><span class="token punctuation">:</span> 当多个数据需要共享内存或多个数据每次只取其一时<span class="token punctuation">,</span> 可以利用`联合体<span class="token punctuation">(</span><span class="token keyword">union</span><span class="token punctuation">)</span>`
-
-<span class="token operator">></span> <span class="token number">1.</span> 联合体是一个`结构`
-<span class="token operator">></span> <span class="token number">2.</span> 它的所有成员相对于`内存起始位的偏移量都是<span class="token number">0</span>`
-<span class="token operator">></span> <span class="token number">3.</span> 此结构内存空间需要大到`足够容纳内存最大的成员`
-<span class="token operator">></span> <span class="token number">4.</span> 因为特点<span class="token number">2</span>共用一个首地址<span class="token punctuation">,</span> 所以联合体中各成员是`互斥`的<span class="token punctuation">,</span> 每次只能赋值一个成员<span class="token punctuation">,</span> 赋入新值会冲掉旧值<span class="token punctuation">.</span>
-    
-<span class="token operator">*</span> <span class="token operator">*</span><span class="token operator">*</span>与结构体比较<span class="token punctuation">:</span><span class="token operator">*</span><span class="token operator">*</span>
-
-<span class="token operator">></span> <span class="token number">1.</span> 结构体每个成员是``依次存储`
-<span class="token operator">></span>    而<span class="token keyword">union</span>中所有成员的`偏移位置均为<span class="token number">0</span>`
-<span class="token operator">></span> <span class="token number">2.</span> 结构体内存的大小取决于`所有成员的内存大小<span class="token punctuation">,</span> 以及字节对齐`
-<span class="token operator">></span>    而<span class="token keyword">union</span>内存大小取决于所有成员中`内存最大`的内个
-        
-<span class="token operator">*</span><span class="token operator">*</span>图<span class="token number">2</span><span class="token punctuation">:</span> <span class="token keyword">struct</span>与<span class="token keyword">union</span>内存分布对比<span class="token operator">*</span><span class="token operator">*</span>
-<span class="token operator">!</span><span class="token punctuation">[</span><span class="token operator">-</span>w434<span class="token punctuation">]</span><span class="token punctuation">(</span>https<span class="token punctuation">:</span><span class="token comment">//tva1.sinaimg.cn/large/007S8ZIlly1gj8o1ayl1aj30o409mmy6.jpg)</span>
-
-
-### <span class="token number">3</span><span class="token punctuation">:</span>　Clang<span class="token punctuation">:</span>
-<span class="token operator">*</span>  <span class="token operator">*</span><span class="token operator">*</span>定义<span class="token operator">*</span><span class="token operator">*</span><span class="token punctuation">:</span>　Clang是一个C语言<span class="token punctuation">,</span> C<span class="token operator">++</span><span class="token punctuation">,</span> OC语言的轻量级编译器<span class="token punctuation">(</span>Clang是⼀个由Apple主导编写，基于LLVM的C<span class="token operator">/</span>C<span class="token operator">++</span><span class="token operator">/</span>Objective<span class="token operator">-</span>C编译器<span class="token punctuation">)</span><span class="token punctuation">.</span>
-<span class="token operator">*</span>  <span class="token operator">*</span><span class="token operator">*</span>常用命令：<span class="token operator">*</span><span class="token operator">*</span>
-    
-<span class="token number">1.</span> 把⽬标⽂件编译成c<span class="token operator">++</span>⽂件<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>clang -rewrite-objc main.m -o main.cpp</p>
-<pre class="line-numbers language-none"><code class="language-none">
-1. UIKit报错问题, 注意路径是否正确:<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-<p>clang -rewrite-objc -fobjc-arc -fobjc-runtime=ios-13.0.0 -isysroot/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator13.0.sdk main.m </p>
-<pre class="line-numbers language-none"><code class="language-none">
-1. &#96;xcode&#96;安装的时候顺带安装了&#96;xcrun&#96;命令，&#96;xcrun&#96;命令在&#96;clang&#96;的基础上进⾏了⼀些封装，要更好⽤⼀些
-&#96;&#96;&#96;xcrun -sdk iphonesimulator clang -arch arm64 -rewrite-objc main.m -o 
-main-arm64.cpp (模拟器) 
-xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp (⼿机) <span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-
-<h2 id="二-看看什么是对象-–-gt-探索isa结构体"><a href="#二-看看什么是对象-–-gt-探索isa结构体" class="headerlink" title="二:　看看什么是对象 – &gt; 探索isa结构体"></a>二:　看看什么是对象 – &gt; 探索isa结构体</h2><ul>
-<li><p><strong>回顾</strong>: 通过runtime源码, 还记得 <code>obj-&gt;initInstanceIsa(cls, hasCxxDtor);</code>的作用是关联内存指针和类, 今天我们顺着步骤来探索isa</p>
-<p>  一路jump进去, 看到这个方法</p>
+<pre class="line-numbers language-none"><code class="language-none">&#x2F;&#x2F; 位域
+struct FixBitArea &#123;
+&#x2F;&#x2F;   类型　域名   : 占据的位数
+    char front  : 1;
+    char back   : 1;
+    char left   : 1;
+    char right  : 1;
+&#125; fixBitArea;
+@end<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>图1: 联合体位域二进位展示</strong><br>
+<img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7f3af088064149bb93b3a7f8362b3424~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<ul>
+<li><strong>优点</strong>:　内存使用更加精细灵活, 节省大量空间</li>
+</ul>
+<blockquote>
+<p>因为我们在一些场景中, 是不需要那么大的空间, 比如说4个BOOL属性都分配4个字节, 那最后会占据128位空间(1字节=8位)，但实际上，我们只需要１位就可以了. 运用union就可以很好的分配内存空间.</p>
+</blockquote>
+<ul>
+<li><strong>缺点</strong>:　各个变量直接是互斥的. 包容性会比较差.</li>
+</ul>
+<h3 id="2-union-联合体"><a class="header-anchor" href="#2-union-联合体">¶</a>2:　union: 联合体</h3>
+<ul>
+<li><strong>定义</strong>: 当多个数据需要共享内存或多个数据每次只取其一时, 可以利用==联合体(union)==</li>
+</ul>
+<blockquote>
+<ol>
+<li>联合体是一个==结构==</li>
+<li>它的所有成员相对于==内存起始位的偏移量都是0==</li>
+<li>此结构内存空间需要大到==足够容纳内存最大的成员==</li>
+<li>因为特点2共用一个首地址, 所以联合体中各成员是==互斥==的, 每次只能赋值一个成员, 赋入新值会冲掉旧值.</li>
+</ol>
+</blockquote>
+<ul>
+<li><strong>与结构体比较:</strong></li>
+</ul>
+<blockquote>
+<ol>
+<li>结构体每个成员是==依次存储==<br>
+而union中所有成员的==偏移位置均为0==</li>
+<li>结构体内存的大小取决于==所有成员的内存大小, 以及字节对齐==<br>
+而union内存大小取决于所有成员中==内存最大==的内个</li>
+</ol>
+</blockquote>
+<p><strong>图2: struct与union内存分布对比</strong><br>
+<img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b1802b3efcba470684c729fb4742bf66~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<h3 id="3-Clang"><a class="header-anchor" href="#3-Clang">¶</a>3:　Clang:</h3>
+<ul>
+<li><strong>定义</strong>:　Clang是一个C语言, C++, OC语言的轻量级编译器(Clang是⼀个由Apple主导编写，基于LLVM的C/C++/Objective-C编译器).</li>
+<li><strong>常用命令：</strong></li>
+</ul>
+<p><strong>1. 把⽬标⽂件编译成c++⽂件</strong></p>
+<p><code>clang -rewrite-objc main.m -o main.cpp</code></p>
+<p><strong>2. UIKit报错问题, 注意路径是否正确:</strong></p>
+<p><code>clang -rewrite-objc -fobjc-arc -fobjc-runtime=ios-13.0.0 -isysroot / Applications/Xcode.app/Contents/Developer/Platforms/ iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator13.0.sdk main.m </code></p>
+<p><strong>3. <code>xcode</code>安装的时候顺带安装了<code>xcrun</code>命令，<code>xcrun</code>命令在<code>clang</code>的基础上进⾏了⼀些封装，要更好⽤⼀些</strong></p>
+<p><code>xcrun -sdk iphonesimulator clang -arch arm64 -rewrite-objc main.m -o  main-arm64.cpp (模拟器)  xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp (⼿机)  </code></p>
+<h2 id="二-看看什么是对象-–-探索isa结构体"><a class="header-anchor" href="#二-看看什么是对象-–-探索isa结构体">¶</a>二:　看看什么是对象 – &gt; 探索isa结构体</h2>
+<ul>
+<li>
+<p><strong>回顾</strong>: 通过runtime源码, 还记得 <code>obj-&gt;initInstanceIsa(cls, hasCxxDtor);</code>的作用是关联内存指针和类, 今天我们顺着步骤来探索isa</p>
+<p>一路jump进去, 看到这个方法<br>
+<strong>图3: initIsa方法:</strong><br>
+<img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a0589f93cf224476a2342e5b0e7ee5f0~tplv-k3u1fbpfcp-zoom-1.image" alt=""><img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ec8303038ce142b2b42d9197e3291b16~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
 </li>
 </ul>
-<p><strong>图3: initIsa方法:</strong><br><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gj8o1ble3nj30u00vmtlf.jpg" alt="-w769"></p>
 <p><strong>这里我们先注意以下方面, 之后的过程会分析:</strong></p>
 <ul>
 <li>nonpointer: 详见截图注释</li>
@@ -216,18 +222,20 @@ xcrun -sdk iphoneos clang -arch arm64 -rewrite-objc main.m -o mainarm64.cpp (�
 <li>newisa.bits = ISA_MAGIC_VALUE;//纯isa指针时, 进行赋值</li>
 <li>newisa.shiftcls = (uintptr_t)cls &gt;&gt; 3;//这里保存的是类的信息</li>
 </ul>
-<p><strong>图4: 我们再来看isa_t的结构:</strong><br><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gj8o1c06daj311k0j6n0t.jpg" alt="-w676"></p>
-<p><strong>图5:ISA_BITFIELD位域信息:</strong><br><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gj8o1cvlb4j30xb0u0ank.jpg" alt="-w819"></p>
-<blockquote>
-<p><code>isa</code>是<code>union isa_t</code>类型，在很多系统中已经不是单纯的指向Class，还包含了<code>内存管理</code>等信息，所以需要用<code>掩码</code>来获取</p>
-</blockquote>
-<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gj8o1dcg0wj31e80u0h57.jpg" alt="-w1309"></p>
+<p><strong>图4: 我们再来看isa_t的结构:</strong><br>
+<img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/797ce014326b4b8980d76d9dba55a34e~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<p><strong>图5:ISA_BITFIELD位域信息:</strong><br>
+<img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/849e6f75914f46e382dbecaa408f1f71~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
+<p><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/52ceb7b339c549c591d3e1bc23922aa1~tplv-k3u1fbpfcp-zoom-1.image" alt=""></p>
 <ul>
-<li>这时候我们来看newisa.shiftcls = (uintptr_t)cls &gt;&gt; 3; <strong>为什么要右移3位呢?</strong> </li>
+<li>这时候我们来看newisa.shiftcls = (uintptr_t)cls &gt;&gt; 3; <strong>为什么要右移3位呢?</strong></li>
 </ul>
 <blockquote>
-<p>先查看isa_t联合体, 看到<code>ISA_BITFIELD</code>是一个占据64位的位域宏定义, 而shiftcls 占据3-35位, 所以存储的时候, 对于newisa.shiftcls来说 ,要节省内存 ,所以右移三位, 删除不需要的东西, 高位位置不够会自动删除, 只存储需要的信息,等用的时候, 再左移回去转换</p>
+<p>先查看isa_t联合体, 看到==ISA_BITFIELD==是一个占据64位的位域宏定义, 而shiftcls 占据3-35位, 所以存储的时候, 对于newisa.shiftcls来说 ,要节省内存 ,所以右移三位, 删除不需要的东西, 高位位置不够会自动删除, 只存储需要的信息,等用的时候, 再左移回去转换</p>
 </blockquote>
-<p><strong>验证:</strong><br>1: 验证magic存储<br><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gj8o1dromdj31t40k8jz2.jpg" alt="-w1000"></p>
-<p>2: 验证isa中的shiftcls存储的是类信息(cls就是纯净的isa指针)<br><img src="media/15997446572352/15999855224042.jpg" alt="-w1000"></p>
-</div><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">luin4</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://luin4.github.io/.github.io/2020/10/13/03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93/">https://luin4.github.io/.github.io/2020/10/13/03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://luin4.github.io/.github.io" target="_blank">林一博客</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/.github.io/tags/Objective-C/">Objective-C</a><a class="post-meta__tags" href="/.github.io/tags/%E7%B1%BB%E7%BB%93%E6%9E%84%E4%BD%93/">类结构体</a></div><div class="post_share"></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/.github.io/2020/10/02/%E4%B8%BB%E9%A2%98/"><img class="next-cover" src="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png" onerror="onerror=null;src='/.github.io/img/404.jpg'"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Hexo-Head使用示例</div></div></a></div></nav></article></main><footer id="footer"><div id="footer-wrap"><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><section id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></section><div><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="/.github.io/js/utils.js"></script><script src="/.github.io/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><div class="js-pjax"></div><script id="click-heart" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/click-heart.min.js" async="async" mobile="false"></script></div></body></html>
+<p>**验证:<br>
+1: magci与宏定义验证(计算器)<br>
+<img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0ed919e6289340bd97d79edb6bc451b5~tplv-k3u1fbpfcp-watermark.image" alt=""><br>
+2: isa shiftcls 验证<br>
+<img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/894c60f0e3ab41b9bbb8b8db0e657866~tplv-k3u1fbpfcp-watermark.image" alt=""></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">luin4</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://luin4.github.io/.github.io/2020/10/13/03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93/">https://luin4.github.io/.github.io/2020/10/13/03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://luin4.github.io/.github.io" target="_blank">林一博客</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/.github.io/tags/Objective-C/">Objective-C</a><a class="post-meta__tags" href="/.github.io/tags/%E7%B1%BB%E7%BB%93%E6%9E%84%E4%BD%93/">类结构体</a></div><div class="post_share"></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/.github.io/2020/10/02/Hexo%20%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/"><img class="next-cover" src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d9b3a41d696d441e8434383e980242f0~tplv-k3u1fbpfcp-watermark.image" onerror="onerror=null;src='/.github.io/img/404.jpg'"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Hexo 使用教程</div></div></a></div></nav></div><div class="aside_content" id="aside_content"><div class="card-widget card-info"><div class="card-content"><div class="card-info-avatar is-center"><img class="avatar-img" src="/.github.io/img/luin4-icon.png" onerror="this.onerror=null;this.src='/.github.io/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">luin4</div><div class="author-info__description">努力努力在努力</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/.github.io/archives/"><div class="headline">文章</div><div class="length-num">2</div></a></div><div class="card-info-data-item is-center"><a href="/.github.io/tags/"><div class="headline">标签</div><div class="length-num">4</div></a></div><div class="card-info-data-item is-center"><a href="/.github.io/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/luin4"><i class="fab fa-github"></i><span>关注我的GitHub</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/luin4" target="_blank" title="Github"><i class="fab fa-github"></i></a></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="card-content"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9F%A5%E8%AF%86%E7%82%B9%E6%89%A9%E5%B1%95"><span class="toc-number">1.</span> <span class="toc-text">知识点扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80-%E4%BD%8D%E5%9F%9F"><span class="toc-number">1.1.</span> <span class="toc-text">一:　 位域</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-union-%E8%81%94%E5%90%88%E4%BD%93"><span class="toc-number">1.2.</span> <span class="toc-text">2:　union: 联合体</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-Clang"><span class="toc-number">1.3.</span> <span class="toc-text">3:　Clang:</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C-%E7%9C%8B%E7%9C%8B%E4%BB%80%E4%B9%88%E6%98%AF%E5%AF%B9%E8%B1%A1-%E2%80%93-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93"><span class="toc-number">2.</span> <span class="toc-text">二:　看看什么是对象 – &gt; 探索isa结构体</span></a></li></ol></div></div></div><div class="card-widget card-recent-post"><div class="card-content"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/.github.io/2020/10/13/03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93/" title="03 - 探索isa结构体"><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d9b3a41d696d441e8434383e980242f0~tplv-k3u1fbpfcp-watermark.image" onerror="this.onerror=null;this.src='/.github.io/img/404.jpg'" alt="03 - 探索isa结构体"/></a><div class="content"><a class="title" href="/.github.io/2020/10/13/03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93/" title="03 - 探索isa结构体">03 - 探索isa结构体</a><time datetime="2020-10-13T02:00:09.000Z" title="发表于 2020-10-13 10:00:09">2020-10-13</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/.github.io/2020/10/02/Hexo%20%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/" title="Hexo 使用教程"><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d9b3a41d696d441e8434383e980242f0~tplv-k3u1fbpfcp-watermark.image" onerror="this.onerror=null;this.src='/.github.io/img/404.jpg'" alt="Hexo 使用教程"/></a><div class="content"><a class="title" href="/.github.io/2020/10/02/Hexo%20%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/" title="Hexo 使用教程">Hexo 使用教程</a><time datetime="2020-10-02T10:00:09.000Z" title="发表于 2020-10-02 18:00:09">2020-10-02</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="/.github.io/js/utils.js"></script><script src="/.github.io/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><div class="js-pjax"></div><script id="click-heart" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/click-heart.min.js" async="async" mobile="false"></script></div></body></html>
