@@ -1,0 +1,388 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>08-慢速查找流程 | 林一博客</title><meta name="keywords" content="Objective-C,类结构体"><meta name="author" content="luin4"><meta name="copyright" content="luin4"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="¶知识点  1: dirty memory : 脏内存, 支持增删改的内存区域 eg: rw结构体   2: clean memory : 干净内存, 只支持读的内存区域 eg: ro结构体  为什么这么设计呢?  苹果的内存优化操作, 防止干净内存(不经常修改的内存区域)受到污染, 比如方法列表, 如果苹果不区分两块儿区域的话, 意味着每次运行时动态添加的方法和分类里扩展的方法都会被写入进去,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="08-慢速查找流程">
+<meta property="og:url" content="https://luin4.github.io/.github.io/2020/10/13/08-%E6%85%A2%E9%80%9F%E6%9F%A5%E6%89%BE-lookUpImpOrForward/index.html">
+<meta property="og:site_name" content="林一博客">
+<meta property="og:description" content="¶知识点  1: dirty memory : 脏内存, 支持增删改的内存区域 eg: rw结构体   2: clean memory : 干净内存, 只支持读的内存区域 eg: ro结构体  为什么这么设计呢?  苹果的内存优化操作, 防止干净内存(不经常修改的内存区域)受到污染, 比如方法列表, 如果苹果不区分两块儿区域的话, 意味着每次运行时动态添加的方法和分类里扩展的方法都会被写入进去,">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png">
+<meta property="article:published_time" content="2020-10-13T02:00:09.000Z">
+<meta property="article:modified_time" content="2020-11-14T09:06:48.599Z">
+<meta property="article:author" content="luin4">
+<meta property="article:tag" content="Objective-C">
+<meta property="article:tag" content="类结构体">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png"><link rel="shortcut icon" href="/.github.io/img/luin4-icon.png"><link rel="canonical" href="https://luin4.github.io/.github.io/2020/10/13/08-%E6%85%A2%E9%80%9F%E6%9F%A5%E6%89%BE-lookUpImpOrForward/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/.github.io/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css"><script>var GLOBAL_CONFIG = { 
+  root: '/.github.io/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  ClickShowText: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  justifiedGallery: {
+    js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+    css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2020-11-14 17:06:48'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><link rel="stylesheet" href="/Github.css"><meta name="generator" content="Hexo 5.2.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" src="/.github.io/img/luin4-icon.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/.github.io/archives/"><div class="headline">文章</div><div class="length-num">7</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/.github.io/tags/"><div class="headline">标签</div><div class="length-num">4</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/.github.io/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/.github.io/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div></div></div><div id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/.github.io/">林一博客</a></span><span id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/.github.io/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/.github.io/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div></div><span class="close" id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></span></span></nav><div id="post-info"><h1 class="post-title">08-慢速查找流程</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-10-13T02:00:09.000Z" title="发表于 2020-10-13 10:00:09">2020-10-13</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2020-11-14T09:06:48.599Z" title="更新于 2020-11-14 17:06:48">2020-11-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/.github.io/categories/OC%E5%BA%95%E5%B1%82%E6%8E%A2%E7%B4%A2/">OC底层探索</a></span></div><div class="meta-secondline"> </div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="知识点"><a class="header-anchor" href="#知识点">¶</a>知识点</h2>
+<blockquote>
+<p><strong>1: <code>dirty memory</code></strong> : 脏内存, 支持增删改的内存区域<br>
+eg: <code>rw</code>结构体</p>
+</blockquote>
+<blockquote>
+<p><strong>2: <code>clean memory</code></strong> : 干净内存, 只支持读的内存区域<br>
+eg: <code>ro</code>结构体</p>
+</blockquote>
+<p><strong>为什么这么设计呢?</strong></p>
+<blockquote>
+<p>苹果的内存优化操作, 防止<code>干净内存</code>(不经常修改的内存区域)受到污染, 比如方法列表, 如果苹果不区分两块儿区域的话, 意味着每次运行时动态添加的方法和分类里扩展的方法都会被写入进去, 那么就会导致<code>objc_class</code>整片区域的内存都要受到污染, 导致<code>内存增大, 性能耗损</code>. 但是区分开后, 我们只处理<code>dirty memory</code>中的<code>methods</code>列表就会是内存和性能得到很大的提升</p>
+</blockquote>
+<blockquote>
+<p><strong>详见</strong>:  <a target="_blank" rel="noopener" href="https://developer.apple.com/videos/play/wwdc2020/10163/">Runtime2020升级改版-更小, 更安全, 更高效</a></p>
+</blockquote>
+<h2 id="1-慢速查询的进入方式"><a class="header-anchor" href="#1-慢速查询的进入方式">¶</a>1: 慢速查询的进入方式</h2>
+<p><strong>方法1: 汇编最终流程发现</strong><br>
+<img src="http://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a49b2bb6aeac4f57bb43761d2a4c354a~tplv-k3u1fbpfcp-zoom-1.image" alt="MethodTableLookup-c856"></p>
+<blockquote>
+<p>这里跟<code>lookUpImpOrForward</code>方法实现中的这块代码相对应</p>
+</blockquote>
+<pre class="line-numbers language-objectiveC" data-language="objectiveC"><code class="language-objectiveC">&#x2F;&#x2F; 这里是预防多线程有可能调用缓存方法的情况
+&#x2F;&#x2F; 需要注意behavior &amp; LOOKUP_CACHE的结果
+&#x2F;&#x2F; behavior: cache查找完后会传3, &amp;后为0, 会跳过cache快速查找
+if (fastpath(behavior &amp; LOOKUP_CACHE)) &#123;
+    imp &#x3D; cache_getImp(cls, sel);
+    if (imp) goto done_nolock;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><strong>方法2:  汇编</strong></p>
+<blockquote>
+<p>通过注释掉实现, 通过<code>debug Workflow </code>-&gt; <code>always show disassembly</code> 查看汇编流程, <code>objc_msgSend</code> -&gt;(ctrl + step info) <code>_objc_msgSend_uncached</code> -&gt; <code>lookUpImpOrForward</code></p>
+</blockquote>
+<h2 id="2-解析lookUpImpOrForward方法"><a class="header-anchor" href="#2-解析lookUpImpOrForward方法">¶</a>2: 解析<code>lookUpImpOrForward</code>方法</h2>
+<pre class="line-numbers language-objectiveC" data-language="objectiveC"><code class="language-objectiveC">IMP lookUpImpOrForward(id inst, SEL sel, Class cls, int behavior)
+&#123;
+    const IMP forward_imp &#x3D; (IMP)_objc_msgForward_impcache;
+    IMP imp &#x3D; nil;
+    Class curClass;
+
+    runtimeLock.assertUnlocked();
+    &#x2F;&#x2F; 1.
+    &#x2F;&#x2F; 这里是预防多线程有可能调用缓存方法的情况
+    &#x2F;&#x2F; 需要注意behavior &amp; LOOKUP_CACHE的结果
+    &#x2F;&#x2F; behavior: cache查找完后会传3, &amp;后为0, 跳过cache快速查找
+    if (fastpath(behavior &amp; LOOKUP_CACHE)) &#123;
+        imp &#x3D; cache_getImp(cls, sel);
+        if (imp) goto done_nolock;
+    &#125;
+    &#x2F;&#x2F; 加锁(保障线程安全)
+    runtimeLock.lock();
+    
+    &#x2F;&#x2F; 2. 是否是已注册验证的Class, 防止代码被恶意入侵, 注入
+    checkIsKnownClass(cls);
+
+    &#x2F;&#x2F; 3. 检查是否进行了类初始化
+    if (slowpath(!cls-&gt;isRealized())) &#123;
+        &#x2F;&#x2F; 4. 内部进行了ro和rw等基础信息的分配, 以及cls作为一个双向链表的继承关系绑定操作
+        cls &#x3D; realizeClassMaybeSwiftAndLeaveLocked(cls, runtimeLock);
+    &#125;
+    
+    &#x2F;&#x2F; 5. 检查是否完成类信息的初始化
+    if (slowpath((behavior &amp; LOOKUP_INITIALIZE) &amp;&amp; !cls-&gt;isInitialized())) &#123;
+        &#x2F;&#x2F; 6. 内部将递归初始化所有类并自动发送initialize方法
+        &#x2F;&#x2F; 根据需要将“ + initialize”消息发送给任何继承链上未初始化的类
+        &#x2F;&#x2F; ((void(*)(Class, SEL))objc_msgSend)(cls, @selector(initialize));
+        cls &#x3D; initializeAndLeaveLocked(cls, inst, runtimeLock);
+    &#125;
+
+    runtimeLock.assertLocked();
+    curClass &#x3D; cls;
+
+    &#x2F;&#x2F; 7. 这里的for是死循环, 因为没有设置循环结束条件
+    for (unsigned attempts &#x3D; unreasonableClassCount();;) &#123;
+        &#x2F;&#x2F; 1. 先查找自己的method list里有没有, 而不查找父类的
+        &#x2F;&#x2F; 内部查找方法findMethodInSortedMethodList用到了二分查找算法, 提高查找效率, 详见注释
+        Method meth &#x3D; getMethodNoSuper_nolock(curClass, sel);
+        if (meth) &#123;&#x2F;&#x2F;查到了则跳出循环完成
+            imp &#x3D; meth-&gt;imp;
+            goto done;
+        &#125;
+        
+        &#x2F;&#x2F; 2. curClass在这里会递归赋值为它的父类,直到继承关系的最终点nil时, 则会赋值imp为forward_imp
+        if (slowpath((curClass &#x3D; curClass-&gt;superclass) &#x3D;&#x3D; nil)) &#123;
+            imp &#x3D; forward_imp;
+            &#x2F;&#x2F; 3. 这里是for死循环的出口条件
+            break;
+        &#125;
+
+        &#x2F;&#x2F; Halt if there is a cycle in the superclass chain.
+        if (slowpath(--attempts &#x3D;&#x3D; 0)) &#123;
+            _objc_fatal(&quot;Memory corruption in class list.&quot;);
+        &#125;
+
+        &#x2F;&#x2F; 4. Superclass cache.
+        &#x2F;&#x2F; 因为上面curClass会递归被赋值为它的父类, 所以这里查找到的是父类的缓存 -&gt; 汇编快速查找cache
+        &#x2F;&#x2F; 注意: cache_getimp 快速查询时, 传入参数是&#96;GETIMP&#96;
+        &#x2F;&#x2F; 如果没找到, 最终jumpMiss返回的是&#96;LGetImpMiss&#96;, 即0x0
+        imp &#x3D; cache_getImp(curClass, sel);
+        
+        &#x2F;&#x2F; 5. 当在父类找到的imp等于forward_imp时, 跳出循环
+        if (slowpath(imp &#x3D;&#x3D; forward_imp)) &#123;
+            &#x2F;&#x2F; Found a forward:: entry in a superclass.
+            &#x2F;&#x2F; Stop searching, but don&#39;t cache yet; call method
+            &#x2F;&#x2F; resolver for this class first.
+            break;
+        &#125;
+        &#x2F;&#x2F; 6. 如果cache_getImp找到了imp在这跳出循环完成
+        if (fastpath(imp)) &#123;
+            &#x2F;&#x2F; Found the method in a superclass. Cache it in this class.
+            goto done;
+        &#125;
+    &#125;
+
+    &#x2F;&#x2F; 8. No implementation found. Try method resolver once.
+    &#x2F;&#x2F; 动态方法决议,
+    &#x2F;&#x2F; behavior &amp; LOOKUP_RESOLVER)类似上面, 作用是只调用一次
+    &#x2F;&#x2F; 待验证: 通过这里实现消息转发的, 这里会只调用1次
+    &#x2F;&#x2F;        没有实现消息转发的, 则会调用2次
+    if (slowpath(behavior &amp; LOOKUP_RESOLVER)) &#123;
+        behavior ^&#x3D; LOOKUP_RESOLVER;
+        &#x2F;&#x2F; 9. 动态方法决议
+        return resolveMethod_locked(inst, sel, cls, behavior);
+    &#125;
+
+ done:
+    &#x2F;&#x2F; 10. 0将查找到的方法写入缓存, 避免下次调用还是慢速查找, 并形成一个闭环
+    log_and_fill_cache(cls, imp, sel, inst, curClass);
+    runtimeLock.unlock();
+ done_nolock:
+    if (slowpath((behavior &amp; LOOKUP_NIL) &amp;&amp; imp &#x3D;&#x3D; forward_imp)) &#123;
+        return nil;
+    &#125;
+    return imp;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="1-重要流程2-4-cls-realizeClassMaybeSwiftAndLeaveLocked-cls-runtimeLock"><a class="header-anchor" href="#1-重要流程2-4-cls-realizeClassMaybeSwiftAndLeaveLocked-cls-runtimeLock">¶</a>1)重要流程2-4. cls = realizeClassMaybeSwiftAndLeaveLocked(cls, runtimeLock);</h3>
+<p><img src="http://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/02339aaada2944cf9e47081b6e8d786c~tplv-k3u1fbpfcp-zoom-1.image" alt="OC准备Class基本信息01-c906"></p>
+<ul>
+<li>下面这个方法的实现, 是在慢速查找流程前的重点, 它准备了class信息中<code>ro和rw</code>等基础信息, 以及<code>双向链表</code>(父类, 元类, 子类)的处理, 确认传入对象的<code>继承关系</code>, 给后面<code>递归其父类缓存方法</code>的流程提供准备工作</li>
+</ul>
+<pre class="line-numbers language-objectivec" data-language="objectivec"><code class="language-objectivec"><span class="token keyword">static</span> Class <span class="token function">realizeClassWithoutSwift</span><span class="token punctuation">(</span>Class cls<span class="token punctuation">,</span> Class previously<span class="token punctuation">)</span>
+
+⬇️
+
+<span class="token comment">// 双向链表, 确认继承关系</span>
+supercls <span class="token operator">=</span> <span class="token function">realizeClassWithoutSwift</span><span class="token punctuation">(</span><span class="token function">remapClass</span><span class="token punctuation">(</span>cls<span class="token operator">-></span>superclass<span class="token punctuation">)</span><span class="token punctuation">,</span> nil<span class="token punctuation">)</span><span class="token punctuation">;</span>
+metacls <span class="token operator">=</span> <span class="token function">realizeClassWithoutSwift</span><span class="token punctuation">(</span><span class="token function">remapClass</span><span class="token punctuation">(</span>cls<span class="token operator">-></span><span class="token function">ISA</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> nil<span class="token punctuation">)</span><span class="token punctuation">;</span>
+⬇️    
+cls<span class="token operator">-></span>superclass <span class="token operator">=</span> supercls<span class="token punctuation">;</span>
+cls<span class="token operator">-></span><span class="token function">initClassIsa</span><span class="token punctuation">(</span>metacls<span class="token punctuation">)</span><span class="token punctuation">;</span>
+⬇️
+<span class="token comment">// 将此类连接到其超类的子类列表</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>supercls<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">addSubclass</span><span class="token punctuation">(</span>supercls<span class="token punctuation">,</span> cls<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span> <span class="token keyword">else</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">addRootClass</span><span class="token punctuation">(</span>cls<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="2-核心流程2-7-1-Method-meth-getMethodNoSuper-nolock-curClass-sel"><a class="header-anchor" href="#2-核心流程2-7-1-Method-meth-getMethodNoSuper-nolock-curClass-sel">¶</a>2)核心流程2-7-1 Method meth = getMethodNoSuper_nolock(curClass, sel);</h3>
+<p><strong>查找主类或其分类的<code>方法列表</code>: 采用<code>二分查找</code>算法, 提高查询效率, 减少性能损耗</strong></p>
+<pre class="line-numbers language-objectivec" data-language="objectivec"><code class="language-objectivec">Method meth <span class="token operator">=</span> <span class="token function">getMethodNoSuper_nolock</span><span class="token punctuation">(</span>curClass<span class="token punctuation">,</span> sel<span class="token punctuation">)</span><span class="token punctuation">;</span>
+⬇️
+ALWAYS_INLINE <span class="token keyword">static</span> method_t <span class="token operator">*</span>
+<span class="token function">findMethodInSortedMethodList</span><span class="token punctuation">(</span>SEL key<span class="token punctuation">,</span> <span class="token keyword">const</span> method_list_t <span class="token operator">*</span>list<span class="token punctuation">)</span>
+<span class="token punctuation">&#123;</span>
+    <span class="token function">ASSERT</span><span class="token punctuation">(</span>list<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment">// list: 是个排完序, 并从小到大递增的方法列表.eg: 0, 1, 2,</span>
+    <span class="token comment">// &amp;list->first: 取址, 并找到首元素</span>
+    <span class="token keyword">const</span> method_t <span class="token operator">*</span> <span class="token keyword">const</span> first <span class="token operator">=</span> <span class="token operator">&amp;</span>list<span class="token operator">-></span>first<span class="token punctuation">;</span>
+    <span class="token keyword">const</span> method_t <span class="token operator">*</span>base <span class="token operator">=</span> first<span class="token punctuation">;</span>
+    <span class="token keyword">const</span> method_t <span class="token operator">*</span>probe<span class="token punctuation">;</span>
+    <span class="token comment">// 要找的SEL, SEL被强转为uintptr_t, 用来比较大小</span>
+    uintptr_t keyValue <span class="token operator">=</span> <span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>key<span class="token punctuation">;</span>
+    uint32_t count<span class="token punctuation">;</span>
+    
+    <span class="token comment">// 1: 二分查找</span>
+    <span class="token comment">//count >>= 1 等价于count/2 16进制</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span>count <span class="token operator">=</span> list<span class="token operator">-></span>count<span class="token punctuation">;</span> count <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">;</span> count <span class="token operator">>>=</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token comment">//内存偏移(base指针地址偏移(count >> 1)个位置)</span>
+        probe <span class="token operator">=</span> base <span class="token operator">+</span> <span class="token punctuation">(</span>count <span class="token operator">>></span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        uintptr_t probeValue <span class="token operator">=</span> <span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>probe<span class="token operator">-></span>name<span class="token punctuation">;</span>
+        
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>keyValue <span class="token operator">==</span> probeValue<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token comment">// 这个当sel相同时, 需要循环递减查找到它的分类的方法实现, 因为加载到内存时, 分类会加载在主类的前边</span>
+            <span class="token comment">// 也可以侧面验证分类可以重写并覆盖主类的方法的调用</span>
+            <span class="token keyword">while</span> <span class="token punctuation">(</span>probe <span class="token operator">></span> first <span class="token operator">&amp;&amp;</span> keyValue <span class="token operator">==</span> <span class="token punctuation">(</span>uintptr_t<span class="token punctuation">)</span>probe<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>name<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                probe<span class="token operator">--</span><span class="token punctuation">;</span>
+            <span class="token punctuation">&#125;</span>
+            <span class="token keyword">return</span> <span class="token punctuation">(</span>method_t <span class="token operator">*</span><span class="token punctuation">)</span>probe<span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+        
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>keyValue <span class="token operator">></span> probeValue<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            base <span class="token operator">=</span> probe <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">;</span>
+            count<span class="token operator">--</span><span class="token punctuation">;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token comment">/* * 举个栗子
+     **运行流程举例1**: 编译断点走一走, 你懂我也懂
+     list = [0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7 ,0x8];
+     base = 0x1
+     keyValue = 0x7;
+     运行流程举例1: 编译断点走一走, 你懂我也懂
+     1: count: 8;  count >> 1: 4;  probe = 0x5(0x1+4);
+        1): keyValue > probeValue: true;
+            base = 0x6 (probe + 1);  count: 7(count--)
+        2): 进入下一次循环
+     2: count: 7(--);  count >>= 1: 3;  probe = 0x6 + 1(3>>1): 0x7;
+        命中返回.
+    -----------------------------------------------------------------
+    **运行流程举例2**: 编译断点走一走, 你懂我也懂
+    list = [0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7 ,0x8];
+    base = 0x1
+    keyValue = 0x2;
+    1: count: 8;  probe = 0x5(0x1+4(count>>1));
+        1): keyValue > probeValue: false;
+        2): 进入下一次循环: true
+            base = 0x1;  count: 8 (都不变)
+    2: count: 8;  count >>= 1: 4;  probe = 0x1 + 2(4>>1): 0x3;
+        1): keyValue > probeValue: false;
+        2): 进入下一次循环: true
+            base = 0x1;  count: 4 (都不变)
+    3: count: 4;  count >>= 1: 2;  probe = 0x1 + 1(4>>1): 0x2;
+        命中返回
+     **/</span>
+    
+    <span class="token keyword">return</span> nil<span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p><img src="http://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ad557ea086214cfba7922e6b4bd57116~tplv-k3u1fbpfcp-zoom-1.image" alt="二分查找图示-c964"></p>
+<h3 id="3-核心流程2-8和9-resolveMethod-locked-inst-sel-cls-behavior"><a class="header-anchor" href="#3-核心流程2-8和9-resolveMethod-locked-inst-sel-cls-behavior">¶</a>3)核心流程2-8和9. resolveMethod_locked(inst, sel, cls, behavior);</h3>
+<pre class="line-numbers language-objectivec" data-language="objectivec"><code class="language-objectivec"><span class="token comment">// 动态方法决议,</span>
+<span class="token comment">// behavior &amp; LOOKUP_RESOLVER)类似上面, 作用是只调用一次</span>
+<span class="token comment">// 待验证: 通过这里实现消息转发的, 这里会只调用1次</span>
+<span class="token comment">//        没有实现消息转发的, 则会调用2次</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">slowpath</span><span class="token punctuation">(</span>behavior <span class="token operator">&amp;</span> LOOKUP_RESOLVER<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    behavior <span class="token operator">^</span><span class="token operator">=</span> LOOKUP_RESOLVER<span class="token punctuation">;</span>
+    <span class="token comment">// 动态方法决议</span>
+    <span class="token keyword">return</span> <span class="token function">resolveMethod_locked</span><span class="token punctuation">(</span>inst<span class="token punctuation">,</span> sel<span class="token punctuation">,</span> cls<span class="token punctuation">,</span> behavior<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="3-慢速查找流程图"><a class="header-anchor" href="#3-慢速查找流程图">¶</a>3. 慢速查找流程图</h2>
+<p><img src="http://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/21b169353f5a4ef184fc62920ba253a7~tplv-k3u1fbpfcp-zoom-1.image" alt="慢速查找流程图"></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">luin4</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://luin4.github.io/.github.io/2020/10/13/08-%E6%85%A2%E9%80%9F%E6%9F%A5%E6%89%BE-lookUpImpOrForward/">https://luin4.github.io/.github.io/2020/10/13/08-%E6%85%A2%E9%80%9F%E6%9F%A5%E6%89%BE-lookUpImpOrForward/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://luin4.github.io/.github.io" target="_blank">林一博客</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/.github.io/tags/Objective-C/">Objective-C</a><a class="post-meta__tags" href="/.github.io/tags/%E7%B1%BB%E7%BB%93%E6%9E%84%E4%BD%93/">类结构体</a></div><div class="post_share"></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/.github.io/2020/10/13/07-%E5%BF%AB%E9%80%9F%E6%9F%A5%E6%89%BE%E6%96%B9%E6%B3%95-cache/"><img class="prev-cover" src="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png" onerror="onerror=null;src='/.github.io/img/404.jpg'"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">07-msg_send()在背后付出了什么之快速查找流程分析</div></div></a></div><div class="next-post pull-right"><a href="/.github.io/2020/10/13/02-%E6%8E%A2%E7%A9%B6%E5%86%85%E5%AD%98%E5%AF%B9%E9%BD%90/"><img class="next-cover" src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d9b3a41d696d441e8434383e980242f0~tplv-k3u1fbpfcp-watermark.image" onerror="onerror=null;src='/.github.io/img/404.jpg'"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">02 - 探究内存对齐</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/.github.io/2020/10/13/03-探索isa结构体/" title="03 - 探索isa结构体"><img class="cover" src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d9b3a41d696d441e8434383e980242f0~tplv-k3u1fbpfcp-watermark.image" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-10-13</div><div class="title">03 - 探索isa结构体</div></div></a></div><div><a href="/.github.io/2020/10/13/05-探索方法归属以及类的归属/" title="05-探索方法归属以及类的归属"><img class="cover" src="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-10-13</div><div class="title">05-探索方法归属以及类的归属</div></div></a></div><div><a href="/.github.io/2020/10/13/06-cache_t探索/" title="06-cache_t探索"><img class="cover" src="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-10-13</div><div class="title">06-cache_t探索</div></div></a></div><div><a href="/.github.io/2020/10/13/07-快速查找方法-cache/" title="07-msg_send()在背后付出了什么之快速查找流程分析"><img class="cover" src="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-10-13</div><div class="title">07-msg_send()在背后付出了什么之快速查找流程分析</div></div></a></div><div><a href="/.github.io/2020/10/13/02-探究内存对齐/" title="02 - 探究内存对齐"><img class="cover" src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d9b3a41d696d441e8434383e980242f0~tplv-k3u1fbpfcp-watermark.image" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-10-13</div><div class="title">02 - 探究内存对齐</div></div></a></div></div></div></div><div class="aside_content" id="aside_content"><div class="card-widget card-info"><div class="card-content"><div class="card-info-avatar is-center"><img class="avatar-img" src="/.github.io/img/luin4-icon.png" onerror="this.onerror=null;this.src='/.github.io/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">luin4</div><div class="author-info__description">努力努力在努力</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/.github.io/archives/"><div class="headline">文章</div><div class="length-num">7</div></a></div><div class="card-info-data-item is-center"><a href="/.github.io/tags/"><div class="headline">标签</div><div class="length-num">4</div></a></div><div class="card-info-data-item is-center"><a href="/.github.io/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div></div><a class="button--animated" id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/luin4"><i class="fab fa-github"></i><span>关注我的GitHub</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/luin4" target="_blank" title="Github"><i class="fab fa-github"></i></a></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="card-content"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-number">1.</span> <span class="toc-text">知识点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%85%A2%E9%80%9F%E6%9F%A5%E8%AF%A2%E7%9A%84%E8%BF%9B%E5%85%A5%E6%96%B9%E5%BC%8F"><span class="toc-number">2.</span> <span class="toc-text">1: 慢速查询的进入方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E8%A7%A3%E6%9E%90lookUpImpOrForward%E6%96%B9%E6%B3%95"><span class="toc-number">3.</span> <span class="toc-text">2: 解析lookUpImpOrForward方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E9%87%8D%E8%A6%81%E6%B5%81%E7%A8%8B2-4-cls-realizeClassMaybeSwiftAndLeaveLocked-cls-runtimeLock"><span class="toc-number">3.1.</span> <span class="toc-text">1)重要流程2-4. cls &#x3D; realizeClassMaybeSwiftAndLeaveLocked(cls, runtimeLock);</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%A0%B8%E5%BF%83%E6%B5%81%E7%A8%8B2-7-1-Method-meth-getMethodNoSuper-nolock-curClass-sel"><span class="toc-number">3.2.</span> <span class="toc-text">2)核心流程2-7-1 Method meth &#x3D; getMethodNoSuper_nolock(curClass, sel);</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%A0%B8%E5%BF%83%E6%B5%81%E7%A8%8B2-8%E5%92%8C9-resolveMethod-locked-inst-sel-cls-behavior"><span class="toc-number">3.3.</span> <span class="toc-text">3)核心流程2-8和9. resolveMethod_locked(inst, sel, cls, behavior);</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E6%85%A2%E9%80%9F%E6%9F%A5%E6%89%BE%E6%B5%81%E7%A8%8B%E5%9B%BE"><span class="toc-number">4.</span> <span class="toc-text">3. 慢速查找流程图</span></a></li></ol></div></div></div><div class="card-widget card-recent-post"><div class="card-content"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/.github.io/2020/10/13/03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93/" title="03 - 探索isa结构体"><img src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d9b3a41d696d441e8434383e980242f0~tplv-k3u1fbpfcp-watermark.image" onerror="this.onerror=null;this.src='/.github.io/img/404.jpg'" alt="03 - 探索isa结构体"/></a><div class="content"><a class="title" href="/.github.io/2020/10/13/03-%E6%8E%A2%E7%B4%A2isa%E7%BB%93%E6%9E%84%E4%BD%93/" title="03 - 探索isa结构体">03 - 探索isa结构体</a><time datetime="2020-10-13T02:00:09.000Z" title="发表于 2020-10-13 10:00:09">2020-10-13</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/.github.io/2020/10/13/05-%E6%8E%A2%E7%B4%A2%E6%96%B9%E6%B3%95%E5%BD%92%E5%B1%9E%E4%BB%A5%E5%8F%8A%E7%B1%BB%E7%9A%84%E5%BD%92%E5%B1%9E/" title="05-探索方法归属以及类的归属"><img src="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png" onerror="this.onerror=null;this.src='/.github.io/img/404.jpg'" alt="05-探索方法归属以及类的归属"/></a><div class="content"><a class="title" href="/.github.io/2020/10/13/05-%E6%8E%A2%E7%B4%A2%E6%96%B9%E6%B3%95%E5%BD%92%E5%B1%9E%E4%BB%A5%E5%8F%8A%E7%B1%BB%E7%9A%84%E5%BD%92%E5%B1%9E/" title="05-探索方法归属以及类的归属">05-探索方法归属以及类的归属</a><time datetime="2020-10-13T02:00:09.000Z" title="发表于 2020-10-13 10:00:09">2020-10-13</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/.github.io/2020/10/13/06-cache_t%E6%8E%A2%E7%B4%A2/" title="06-cache_t探索"><img src="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png" onerror="this.onerror=null;this.src='/.github.io/img/404.jpg'" alt="06-cache_t探索"/></a><div class="content"><a class="title" href="/.github.io/2020/10/13/06-cache_t%E6%8E%A2%E7%B4%A2/" title="06-cache_t探索">06-cache_t探索</a><time datetime="2020-10-13T02:00:09.000Z" title="发表于 2020-10-13 10:00:09">2020-10-13</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/.github.io/2020/10/13/07-%E5%BF%AB%E9%80%9F%E6%9F%A5%E6%89%BE%E6%96%B9%E6%B3%95-cache/" title="07-msg_send()在背后付出了什么之快速查找流程分析"><img src="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png" onerror="this.onerror=null;this.src='/.github.io/img/404.jpg'" alt="07-msg_send()在背后付出了什么之快速查找流程分析"/></a><div class="content"><a class="title" href="/.github.io/2020/10/13/07-%E5%BF%AB%E9%80%9F%E6%9F%A5%E6%89%BE%E6%96%B9%E6%B3%95-cache/" title="07-msg_send()在背后付出了什么之快速查找流程分析">07-msg_send()在背后付出了什么之快速查找流程分析</a><time datetime="2020-10-13T02:00:09.000Z" title="发表于 2020-10-13 10:00:09">2020-10-13</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/.github.io/2020/10/13/08-%E6%85%A2%E9%80%9F%E6%9F%A5%E6%89%BE-lookUpImpOrForward/" title="08-慢速查找流程"><img src="https://cdn.jsdelivr.net/gh/jerryc127/CDN@latest/cover/default_bg.png" onerror="this.onerror=null;this.src='/.github.io/img/404.jpg'" alt="08-慢速查找流程"/></a><div class="content"><a class="title" href="/.github.io/2020/10/13/08-%E6%85%A2%E9%80%9F%E6%9F%A5%E6%89%BE-lookUpImpOrForward/" title="08-慢速查找流程">08-慢速查找流程</a><time datetime="2020-10-13T02:00:09.000Z" title="发表于 2020-10-13 10:00:09">2020-10-13</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="/.github.io/js/utils.js"></script><script src="/.github.io/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><div class="js-pjax"></div><script id="click-heart" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/click-heart.min.js" async="async" mobile="false"></script></div></body></html>
